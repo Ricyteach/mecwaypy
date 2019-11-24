@@ -1,3 +1,4 @@
+import itertools
 import pathlib
 import pytest
 from mecwaypy import mecway
@@ -35,6 +36,23 @@ def materials_obj(mecway_obj):
 def test_mecway(mecway_obj):
     assert mecway_obj
 
-attr
+
 def test_materials(materials_obj):
     assert materials_obj
+
+
+@pytest.mark.parametrize("name", [
+    "mat1", "mat2"
+])
+def test_material(materials_obj, name):
+    assert materials_obj[name]
+
+
+@pytest.mark.parametrize("attr, name", [
+    *itertools.product(["attr1", "attr2", "attr3", "attr4"], ["mat1", "mat2"])
+])
+def test_attr(materials_obj, name, attr):
+    assert materials_obj[name].get_param(attr)
+
+
+# TODO: attr writing tests

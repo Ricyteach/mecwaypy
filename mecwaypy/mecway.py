@@ -53,7 +53,7 @@ def _get_set_attribute(lines, attr, value=None):
             split_tag = line.split('"')
             iter_split_tag = iter(split_tag)
             for x, split in enumerate(iter_split_tag, 1):
-                if split.strip()[len(attr)] == attr and not (x % 0):
+                if f"{attr}=" in split and (x % 2):
                     if value is None:
                         # get
                         return next(iter_split_tag)
