@@ -32,10 +32,10 @@ def _get_material_names(lines):
     start = 0
     while True:
         try:
-            slc = _material_slice(lines, name=None, start=0)
+            slc = _material_slice(lines[start:], None, start)
             mat_lines = lines[slc]
             yield _get_material_name(mat_lines)
-            start = slc.start
+            start = slc.stop
         except LastMaterialException:
             break
 
@@ -48,13 +48,12 @@ def _get_material_name(mat_lines):
 
 
 def _get_set_attribute(lines, attr, value=None):
-    needle = f"{attr}="
     for line_idx, line in enumerate(lines):
-        if needle in line:
+        if attr in line:
             split_tag = line.split('"')
             iter_split_tag = iter(split_tag)
             for x, split in enumerate(iter_split_tag, 1):
-                if split == needle and not (x % 0):
+                if split.strip()[len(attr)] == attr and not (x % 0):
                     if value is None:
                         # get
                         return next(iter_split_tag)
@@ -76,10 +75,13 @@ def _get_attribute(lines, attr):
 
 
 def _search_material_start(lines, name=None, start=0):
-    if name:
-        return _search_lines(lines, f'<mat name="{name}">', TagException(f'<mat name="{name}">'), start)
-    else:
-        return _search_lines(lines, f'<mat name="', TagException(f"<mat>"), start)
+    try:
+        if name:
+            return _search_lines(lines, f'<mat name="{name}">', TagException(f'<mat name="{name}">'), start)
+        else:
+            return _search_lines(lines, f'<mat name="', TagException(f"<mat>"), start)
+    except TagException as e:
+        raise LastMaterialException()
 
 
 def _search_material_end(lines, start=0):
@@ -88,7 +90,7 @@ def _search_material_end(lines, start=0):
 
 def _material_slice(lines, name=None, start=0):
     mat_start, _ = _search_material_start(lines, name, start=start)
-    mat_end, _ = _search_material_end(lines[mat_start:], start=mat_start)
+    mat_end, _ = _search_material_end(lines[mat_start-start:], start=mat_start)
     return slice(mat_start, mat_end + 1)
 
 
@@ -121,7 +123,7 @@ class Material:
 @dataclass
 class Materials:
     mway: Mecway
-    _dict: Dict[str, Material] = field(init=False)
+    _dict: Dict[str, Material] = field(init=False, default_factory=dict)
 
     def __post_init__(self):
         for name in _get_material_names(self.mway.lines):
