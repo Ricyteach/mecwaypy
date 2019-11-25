@@ -8,8 +8,17 @@ TEST_LIML = """<mat name="mat1">
 <attributes2 attr3="x" attr4="y" /> 
 </mat>
 <mat name="mat2">
+
 <attributes1 attr1="a" attr2="b" /> 
 <attributes2 attr3="x" attr4="y" /> 
+</mat>
+
+
+
+<mat name="mat3">
+<attributes1 attr1="a" attr2="b" /> 
+<attributes2 attr3="x" attr4="y" /> 
+
 </mat>"""
 
 TEST_FILE = "test.liml"
@@ -49,10 +58,15 @@ def test_material(materials_obj, name):
 
 
 @pytest.mark.parametrize("attr, name", [
-    *itertools.product(["attr1", "attr2", "attr3", "attr4"], ["mat1", "mat2"])
+    *itertools.product(["attr1", "attr2", "attr3", "attr4"], ["mat1", "mat2", "mat3"])
 ])
-def test_attr(materials_obj, name, attr):
+def test_attr_read(materials_obj, name, attr):
     assert materials_obj[name].get_param(attr)
 
 
-# TODO: attr writing tests
+@pytest.mark.parametrize("attr, name", [
+    *itertools.product(["attr1", "attr2", "attr3", "attr4"], ["mat1", "mat2"])
+])
+def test_attr_write(materials_obj, name, attr):
+    materials_obj[name].set_param(attr, "q")
+    assert materials_obj[name].get_param(attr) == "q"

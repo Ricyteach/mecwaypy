@@ -59,7 +59,7 @@ def _get_set_attribute(lines, attr, value=None):
                         return next(iter_split_tag)
                     else:
                         # set
-                        split_tag[x + 1] = value
+                        split_tag[x] = value
                         lines[line_idx] = '"'.join(split_tag)
                         return
     else:
