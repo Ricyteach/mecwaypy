@@ -14,10 +14,10 @@ CMPST_RNG = range(E_COMPOSITE-200, E_COMPOSITE+300, 100)  # ksi
 TIG_RNG =  range(10, 30, 5)  # %
 
 
-def gen_mecway_combo():
+def gen_mecway_combos():
     model = Mecway(pathlib.Path(FILE))
-    for plastic, tig, composite in itertools.product(PLASTIC_RNG, TIG_RNG, CMPST_RNG):
-        target = pathlib.Path(TARGET.format(e_plastic_pctg=plastic, e_comp=composite, e_tig_pctg=plastic))
+    for composite, plastic, tig in itertools.product(CMPST_RNG, PLASTIC_RNG, TIG_RNG):
+        target = pathlib.Path(TARGET.format(e_plastic_pctg=plastic, e_comp=composite, e_tig_pctg=tig))
         p = f"{E_PLASTIC * plastic / 100:.3f} GPa"
         t = f"{E_PLASTIC * plastic / 100 * tig / 100:.3f} GPa"
         c = f"{composite:d} ksi"
