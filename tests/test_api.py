@@ -70,3 +70,14 @@ def test_attr_read(materials_obj, name, attr):
 def test_attr_write(materials_obj, name, attr):
     materials_obj[name].set_param(attr, "q")
     assert materials_obj[name].get_param(attr) == "q"
+
+
+def test_copy(mecway_obj):
+    cpy = mecway_obj.copy()
+    assert cpy is not mecway_obj
+    assert cpy.lines is not mecway_obj.lines
+
+
+def test_with(mecway_obj):
+    with mecway_obj as m:
+        assert m is mecway_obj

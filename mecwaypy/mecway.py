@@ -163,3 +163,24 @@ class Mecway:
         except AttributeError:
             mats = self._mats = Materials(self)
             return mats
+
+    def __enter__(self):
+
+        self._fstream = self.path.open('w')
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+
+        self._fstream.writelines(self.lines)
+        self._fstream.close()
+        del self._fstream
+
+    def copy(self, target: Optional[Path] = None) -> Mecway:
+
+        cpy = Mecway.__new__(type(self))
+        cpy.lines = self.lines[:]
+
+        if target:
+            cpy.path = target
+
+        return cpy
