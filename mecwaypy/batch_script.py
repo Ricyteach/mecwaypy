@@ -26,3 +26,7 @@ def gen_mecway_combo():
             m.materials["PlasticWallsWithSlits"].set_param("youngsmodulus", p)
             m.materials["CompositeMaterial"].set_param("youngsmodulus", c)
             m.materials["TIG_Plastic"].set_param("youngsmodulus", t)
+            csv = str(m.path.with_suffix(".csv").name)
+            for x, line in enumerate(m.lines):
+                if "<saveonsolve filename=" in line:
+                    m.lines[x] = f'    <saveonsolve filename="{csv}" />'
