@@ -140,6 +140,7 @@ class Materials:
 class Mecway:
     path: Path
     target: InitVar[Optional[Path]] = None
+    mode: str = 'x'
     lines: MutableSequence[str] = field(repr=False, init=False)
 
     def __post_init__(self, target):
@@ -152,7 +153,7 @@ class Mecway:
 
     def save(self):
 
-        with self.path.open('w') as mway:
+        with self.path.open(self.mode) as mway:
             mway.writelines(self.lines)
 
     @property
@@ -166,7 +167,7 @@ class Mecway:
 
     def __enter__(self):
 
-        self._fstream = self.path.open('w')
+        self._fstream = self.path.open(self.mode)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -179,6 +180,7 @@ class Mecway:
 
         cpy = Mecway.__new__(type(self))
         cpy.lines = self.lines[:]
+        cpy.mode = self.mode
 
         if target:
             cpy.path = target

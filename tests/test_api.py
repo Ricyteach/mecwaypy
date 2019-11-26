@@ -78,6 +78,12 @@ def test_copy(mecway_obj):
     assert cpy.lines is not mecway_obj.lines
 
 
+def test_with_fileexists(mecway_obj):
+    with pytest.raises(FileExistsError):
+        with mecway_obj as m:
+            ...
+
 def test_with(mecway_obj):
+    mecway_obj.mode = "w"
     with mecway_obj as m:
         assert m is mecway_obj
