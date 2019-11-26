@@ -1,7 +1,12 @@
 from __future__ import annotations
-from typing import Optional, MutableSequence, Dict
+
+from collections.abc import Sequence
+from typing import Optional, Dict
 from dataclasses import dataclass, field, InitVar
 from pathlib import Path
+import pandas as pd
+
+LINES = "lines"
 
 
 def _search_lines(lines, needle, err, start=0):
@@ -42,8 +47,8 @@ def _get_material_names(lines):
 
 def _get_material_name(mat_lines):
     try:
-        return mat_lines[0].split('"')[1]
-    except IndexError as e:
+        return next(iter(mat_lines)).split('"')[1]
+    except (IndexError, KeyError) as e:
         raise AttrException("<mat name=...>") from e
 
 
@@ -114,7 +119,8 @@ class Material:
     def set_param(self, param: str, value: str):
         lines = self.lines
         _set_attribute(lines, param, value)
-        self.lines = lines
+        if isinstance(lines, Sequence):
+            self.lines = lines
 
     def get_param(self, param: str):
         return _get_attribute(self.lines, param)
@@ -141,15 +147,19 @@ class Mecway:
     path: Path
     target: InitVar[Optional[Path]] = None
     mode: str = 'x'
-    lines: MutableSequence[str] = field(repr=False, init=False)
+    df: pd.DataFrame = field(repr=False, init=False)
 
     def __post_init__(self, target):
 
         with self.path.open('r') as mway:
-            self.lines = mway.readlines()
+            self.df = pd.DataFrame(mway.readlines(), columns=[LINES], dtype=str)
 
         if target:
             self.path = target
+
+    @property
+    def lines(self):
+        return self.df[LINES]
 
     def save(self):
 
@@ -179,7 +189,7 @@ class Mecway:
     def copy(self, target: Optional[Path] = None) -> Mecway:
 
         cpy = Mecway.__new__(type(self))
-        cpy.lines = self.lines[:]
+        cpy.df = self.df.copy()
         cpy.mode = self.mode
 
         if target:

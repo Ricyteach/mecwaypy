@@ -8,5 +8,6 @@ setup(
     license='MIT',
     author='Rick Teachey',
     author_email='ricky@teachey.org',
-    description='Tools for working with mecway .liml files  '
+    description='Tools for working with mecway .liml files',
+    install_requires=['pandas']
 )
