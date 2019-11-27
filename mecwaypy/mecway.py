@@ -102,7 +102,11 @@ def _material_slice(lines, name=None, start=0):
 @dataclass
 class Material:
     name: str
-    mway: Mecway
+    mway: Mecway = field(repr=False)
+    df: pd.DataFrame = field(init=False)
+
+    def __post_init__(self):
+        self.df = self.mway.lines[self.slice]
 
     @property
     def slice(self):
@@ -117,10 +121,9 @@ class Material:
         self.mway.lines[self.slice] = lines
 
     def set_param(self, param: str, value: str):
-        lines = self.lines
+        lines = list(self.lines)
         _set_attribute(lines, param, value)
-        if isinstance(lines, Sequence):
-            self.lines = lines
+        self.mway.lines[self.slice] = lines
 
     def get_param(self, param: str):
         return _get_attribute(self.lines, param)
@@ -157,6 +160,9 @@ class Mecway:
         if target:
             self.path = target
 
+        self.df[LINES] = self.df[LINES].str.strip()
+        self._mats = Materials(self)
+
     @property
     def lines(self):
         return self.df[LINES]
@@ -169,11 +175,7 @@ class Mecway:
     @property
     def materials(self):
 
-        try:
-            return self._mats
-        except AttributeError:
-            mats = self._mats = Materials(self)
-            return mats
+        return self._mats
 
     def __enter__(self):
 
