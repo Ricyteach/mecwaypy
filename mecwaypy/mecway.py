@@ -117,10 +117,9 @@ class Material:
         self.mway.lines[self.slice] = lines
 
     def set_param(self, param: str, value: str):
-        lines = self.lines
+        lines = list(self.lines)
         _set_attribute(lines, param, value)
-        if isinstance(lines, Sequence):
-            self.lines = lines
+        self.mway.lines[self.slice] = lines
 
     def get_param(self, param: str):
         return _get_attribute(self.lines, param)
