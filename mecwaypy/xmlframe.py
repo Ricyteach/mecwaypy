@@ -66,7 +66,7 @@ def _parsed_df(xml_df: pd.DataFrame):
 
     # split attributes into names and values
     attr_part_end_srs = str_srs.str[-1:]
-    if _check((attr_part_end_srs!='"') & (attr_part_end_srs!="")):
+    if _check(-attr_part_end_srs.isin(['"', ""])):
         raise TagException("appear to be malformed attribute(s) in tag")
     attrs_df = str_srs.str.split('"', expand=True).replace({None: ""}).iloc[:, :-1]
 
