@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, InitVar
 from typing import Any, Union, Dict, Optional, KeysView
 import pandas as pd
+import numpy as np
 from pandas.core.strings import StringMethods as DFString
 from mecwaypy.mecway import TagException, AttrException
 
@@ -14,7 +15,7 @@ TAG = "tag"
 
 def _check(s: Any) -> bool:
     """Truthy check an atomic or a pd.Series"""
-    if isinstance(s, pd.Series):
+    if isinstance(s, (pd.Series, np.ndarray)):
         return s.any()
     return s
 
@@ -96,9 +97,8 @@ def _gen_tag_df(tag: str, parsed_df: pd.DataFrame):
 
 
 class TagSeries(pd.Series):
-    def __new__(cls, srs: pd.Series) -> TagSeries:
-        obj = super().__new__(cls, srs)
-        return obj
+    def __init__(self, srs: pd.Series):
+        super().__init__(srs)
 
 
 @dataclass
@@ -108,17 +108,16 @@ class TagGroup:
     keys: KeysView = field(init=False)
     map: Dict[str, TagSeries] = field(init=False, repr=False, default_factory=dict)
     df: pd.DataFrame = field(repr=False, init=False, default_factory=pd.DataFrame)
-    xml_df: InitVar[Optional[pd.DataFrame]] = None
+    parsed_df: InitVar[Optional[pd.DataFrame]] = None
 
-    def __post_init__(self, xml_df: Optional[pd.DataFrame]):
+    def __post_init__(self, parsed_df: Optional[pd.DataFrame]):
         self.keys = self.map.keys()
 
-        parsed_df = _parsed_df(xml_df)
         for tag_df in _gen_tag_df(self.tag, parsed_df):
             attr_srs = pd.Series()
-            for col_num in range(0, len(tag_df), 2):
-                partial_attr_srs = tag_df.iloc[:, col_num:col_num + 2].set_index(col_num).iloc[:, 0]
-                attr_srs.append(partial_attr_srs[partial_attr_srs != ""])
+            for col_num in range(0, len(tag_df.columns)-3, 2):
+                partial_attr_srs = tag_df.loc[:, (col_num, col_num + 1)].set_index(col_num).iloc[:, 0]
+                attr_srs = attr_srs.append(partial_attr_srs[partial_attr_srs != ""])
             key = attr_srs[self.key_attr]
             attr_srs.name = key
             self.map[key] = TagSeries(attr_srs)
