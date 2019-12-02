@@ -7,7 +7,6 @@ from mecwaypy.mecway import TagException, AttrException
 LB = "lb"
 RB = "rb"
 TAG = "tag"
-ATTRS="attrs"
 
 
 def _check(s: Any) -> bool:
@@ -68,7 +67,11 @@ def _parsed_df(xml_df: pd.DataFrame):
     attr_part_end_srs = str_srs.str[-1:]
     if _check(-attr_part_end_srs.isin(['"', ""])):
         raise TagException("appear to be malformed attribute(s) in tag")
-    attrs_df = str_srs.str.split('"', expand=True).replace({None: ""}).iloc[:, :-1]
+    attrs_df = str_srs.str.split('"', expand=True).replace({None: ""}).iloc[:, :-1].apply(lambda srs: srs.str.strip())
+    # do away with attribute name equal signs and space
+    for attr_col, attr_label_srs in attrs_df.iloc[:,0::2].iteritems():
+        attrs_df[attr_col] = attr_label_srs.str.split("=", expand=True)[0].str.strip()
+        attrs_df[attr_col].name = attr_col
 
     # combine parsed and attrs
     result_df = (parsed_df + attrs_df)  # np.nan populated
