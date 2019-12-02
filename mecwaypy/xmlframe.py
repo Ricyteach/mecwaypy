@@ -1,4 +1,7 @@
-from typing import Any, Union
+from __future__ import annotations
+
+from dataclasses import dataclass, field, InitVar
+from typing import Any, Union, Dict, Optional, KeysView
 import pandas as pd
 from pandas.core.strings import StringMethods as DFString
 from mecwaypy.mecway import TagException, AttrException
@@ -79,3 +82,44 @@ def _parsed_df(xml_df: pd.DataFrame):
     result_df.update(attrs_df)
 
     return result_df
+
+
+def _gen_tag_df(tag: str, parsed_df: pd.DataFrame):
+    tag_start_idx = parsed_df.index[(parsed_df[TAG] == tag) & (parsed_df[LB] == "<")]
+    tag_stop_idx = parsed_df.index[(parsed_df[TAG] == tag) & ((parsed_df[LB] == "</") | (parsed_df[LB] == "/>"))]
+    if tag_start_idx.size != tag_stop_idx.size:
+        raise TagException(f"{tag!r} tag start end mismatch")
+    if _check(tag_stop_idx < tag_start_idx):
+        raise TagException(f"{tag!r} tag start end mismatch")
+    for start, stop in zip(tag_start_idx, tag_stop_idx):
+        yield parsed_df.loc[start:stop, :]
+
+
+class TagSeries(pd.Series):
+    def __new__(cls, srs: pd.Series) -> TagSeries:
+        obj = super().__new__(cls, srs)
+        return obj
+
+
+@dataclass
+class TagGroup:
+    tag: str
+    key_attr: str = field(repr=False)
+    keys: KeysView = field(init=False)
+    map: Dict[str, TagSeries] = field(init=False, repr=False, default_factory=dict)
+    df: pd.DataFrame = field(repr=False, init=False, default_factory=pd.DataFrame)
+    xml_df: InitVar[Optional[pd.DataFrame]] = None
+
+    def __post_init__(self, xml_df: Optional[pd.DataFrame]):
+        self.keys = self.map.keys()
+
+        parsed_df = _parsed_df(xml_df)
+        for tag_df in _gen_tag_df(self.tag, parsed_df):
+            attr_srs = pd.Series()
+            for col_num in range(0, len(tag_df), 2):
+                partial_attr_srs = tag_df.iloc[:, col_num:col_num + 2].set_index(col_num).iloc[:, 0]
+                attr_srs.append(partial_attr_srs[partial_attr_srs != ""])
+            key = attr_srs[self.key_attr]
+            attr_srs.name = key
+            self.map[key] = TagSeries(attr_srs)
+            self.df = self.df.join(attr_srs, how="outer")
