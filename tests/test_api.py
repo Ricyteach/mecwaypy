@@ -50,23 +50,27 @@ def test_materials(materials_obj):
     assert materials_obj
 
 
-@pytest.mark.parametrize("name", [
-    "mat1", "mat2"
-])
+@pytest.mark.parametrize("name", ["mat1", "mat2"])
 def test_material(materials_obj, name):
     assert materials_obj[name]
 
 
-@pytest.mark.parametrize("attr, name", [
-    *itertools.product(["attr1", "attr2", "attr3", "attr4"], ["mat1", "mat2", "mat3"])
-])
+@pytest.mark.parametrize(
+    "attr, name",
+    [
+        *itertools.product(
+            ["attr1", "attr2", "attr3", "attr4"], ["mat1", "mat2", "mat3"]
+        )
+    ],
+)
 def test_attr_read(materials_obj, name, attr):
     assert materials_obj[name].get_param(attr)
 
 
-@pytest.mark.parametrize("attr, name", [
-    *itertools.product(["attr1", "attr2", "attr3", "attr4"], ["mat1", "mat2"])
-])
+@pytest.mark.parametrize(
+    "attr, name",
+    [*itertools.product(["attr1", "attr2", "attr3", "attr4"], ["mat1", "mat2"])],
+)
 def test_attr_write(materials_obj, name, attr):
     materials_obj[name].set_param(attr, "q")
     assert materials_obj[name].get_param(attr) == "q"
@@ -82,6 +86,7 @@ def test_with_fileexists(mecway_obj):
     with pytest.raises(FileExistsError):
         with mecway_obj as m:
             ...
+
 
 def test_with(mecway_obj):
     mecway_obj.mode = "w"
