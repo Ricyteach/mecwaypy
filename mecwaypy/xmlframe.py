@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, InitVar
-from typing import Any, Union, Dict, Optional, KeysView
+from typing import Any, Union, Optional, KeysView, MutableMapping
 import pandas as pd
 import numpy as np
 from pandas.core.strings import StringMethods as DFString
@@ -110,17 +110,23 @@ class TagSeries(pd.Series):
         super().__init__(srs)
 
 
-@dataclass
+@dataclass(repr=False)
 class TagGroup:
     tag: str
-    key_attr: str = field(repr=False)
-    keys: KeysView = field(init=False)
-    map: Dict[str, TagSeries] = field(init=False, repr=False, default_factory=dict)
-    df: pd.DataFrame = field(repr=False, init=False, default_factory=pd.DataFrame)
+    key_attr: str
+    view: KeysView = field(init=False)
+    df: pd.DataFrame = field(init=False, default_factory=pd.DataFrame)
     parsed_df: InitVar[Optional[pd.DataFrame]] = None
+    map: MutableMapping[str, TagSeries] = field(default_factory=dict)
 
     def __post_init__(self, parsed_df: Optional[pd.DataFrame]):
-        self.keys = self.map.keys()
+        class ViewCls(KeysView):
+            def __repr__(self_):
+                return "{name!s}([{keys!s}])".format(
+                    name=type(self_).__name__, keys=", ".join(self_._mapping)
+                )
+
+        ViewCls.__name__ = self.tag
 
         for tag_df in _gen_tag_df(self.tag, parsed_df):
             attr_srs = pd.Series()
@@ -130,6 +136,15 @@ class TagGroup:
                 )
                 attr_srs = attr_srs.append(partial_attr_srs[partial_attr_srs != ""])
             key = attr_srs[self.key_attr]
+            self.view = ViewCls(self.map)
             attr_srs.name = key
             self.map[key] = TagSeries(attr_srs)
             self.df = self.df.join(attr_srs, how="outer")
+
+    def __repr__(self):
+        return "{name}({tag!r}, {attr}=[{keys}])".format(
+            name=type(self).__qualname__,
+            tag=self.tag,
+            attr=self.key_attr,
+            keys=", ".join(repr(k) for k in self.map),
+        )
