@@ -114,19 +114,11 @@ class TagSeries(pd.Series):
 class TagGroup:
     tag: str
     key_attr: str
-    view: KeysView = field(init=False)
     df: pd.DataFrame = field(init=False, default_factory=pd.DataFrame)
     parsed_df: InitVar[Optional[pd.DataFrame]] = None
     map: MutableMapping[str, TagSeries] = field(default_factory=dict)
 
     def __post_init__(self, parsed_df: Optional[pd.DataFrame]):
-        class ViewCls(KeysView):
-            def __repr__(self_):
-                return "{name!s}([{keys!s}])".format(
-                    name=type(self_).__name__, keys=", ".join(self_._mapping)
-                )
-
-        ViewCls.__name__ = self.tag
 
         for tag_df in _gen_tag_df(self.tag, parsed_df):
             attr_srs = pd.Series()
@@ -136,15 +128,11 @@ class TagGroup:
                 )
                 attr_srs = attr_srs.append(partial_attr_srs[partial_attr_srs != ""])
             key = attr_srs[self.key_attr]
-            self.view = ViewCls(self.map)
             attr_srs.name = key
             self.map[key] = TagSeries(attr_srs)
             self.df = self.df.join(attr_srs, how="outer")
 
     def __repr__(self):
-        return "{name}({tag!r}, {attr}=[{keys}])".format(
-            name=type(self).__qualname__,
-            tag=self.tag,
-            attr=self.key_attr,
-            keys=", ".join(repr(k) for k in self.map),
+        return "{0.__class__.__name__}({0.tag!r}, {0.key_attr}=[{1}])".format(
+            self, ", ".join(repr(k) for k in self.map)
         )
