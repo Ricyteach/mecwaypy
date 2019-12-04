@@ -82,7 +82,12 @@ def _get_attribute(lines, attr):
 def _search_material_start(lines, name=None, start=0):
     try:
         if name:
-            return _search_lines(lines, f'<mat name="{name}">', TagException(f'<mat name="{name}">'), start)
+            return _search_lines(
+                lines,
+                f'<mat name="{name}">',
+                TagException(f'<mat name="{name}">'),
+                start,
+            )
         else:
             return _search_lines(lines, f'<mat name="', TagException(f"<mat>"), start)
     except TagException as e:
@@ -90,12 +95,12 @@ def _search_material_start(lines, name=None, start=0):
 
 
 def _search_material_end(lines, start=0):
-    return _search_lines(lines, '</mat>', TagException("</mat>"), start)
+    return _search_lines(lines, "</mat>", TagException("</mat>"), start)
 
 
 def _material_slice(lines, name=None, start=0):
     mat_start, _ = _search_material_start(lines, name, start=start)
-    mat_end, _ = _search_material_end(lines[mat_start-start:], start=mat_start)
+    mat_end, _ = _search_material_end(lines[mat_start - start :], start=mat_start)
     return slice(mat_start, mat_end + 1)
 
 
@@ -149,12 +154,12 @@ class Materials:
 class Mecway:
     path: Path
     target: InitVar[Optional[Path]] = None
-    mode: str = 'x'
+    mode: str = "x"
     df: pd.DataFrame = field(repr=False, init=False)
 
     def __post_init__(self, target):
 
-        with self.path.open('r') as mway:
+        with self.path.open("r") as mway:
             self.df = pd.DataFrame(mway.readlines(), columns=[LINES], dtype=str)
 
         if target:

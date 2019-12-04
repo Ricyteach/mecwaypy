@@ -45,7 +45,7 @@ def _parsed_df(xml_df: pd.DataFrame):
     # right brackets
     parsed_df[RB] = ">"
     end_char = str_srs.str[-1]
-    end_slash_filter = end_char=="/"
+    end_slash_filter = end_char == "/"
     parsed_df[RB].update(end_char[end_slash_filter] + parsed_df[RB])
     # remove any right slashes (atomic tags)
     str_srs.update(str_srs[end_slash_filter].str[:-1])
@@ -53,17 +53,19 @@ def _parsed_df(xml_df: pd.DataFrame):
     # left brackets
     parsed_df[LB] = "<"
     start_char = str_srs.str[0]
-    start_slash_filter = start_char=="/"
+    start_slash_filter = start_char == "/"
     parsed_df[LB].update(parsed_df[LB] + start_char[start_slash_filter])
     # remove any left slashes (end tags)
     str_srs.update(str_srs[start_slash_filter].str[1:])
 
     # break off tag names
     str_srs = str_srs.str.strip()
-    iter_tag_attr_columns = (col for _, col in str_srs.str.strip().str.split(" ", 1, expand=True).iteritems())
+    iter_tag_attr_columns = (
+        col for _, col in str_srs.str.strip().str.split(" ", 1, expand=True).iteritems()
+    )
     parsed_df[TAG], *rest = iter_tag_attr_columns
     try:
-        str_srs = rest[0].replace({None:""})
+        str_srs = rest[0].replace({None: ""})
     except IndexError:
         str_srs.at[:] = ""
 
@@ -71,14 +73,19 @@ def _parsed_df(xml_df: pd.DataFrame):
     attr_part_end_srs = str_srs.str[-1:]
     if _check(-attr_part_end_srs.isin(['"', ""])):
         raise TagException("appear to be malformed attribute(s) in tag")
-    attrs_df = str_srs.str.split('"', expand=True).replace({None: ""}).iloc[:, :-1].apply(lambda srs: srs.str.strip())
+    attrs_df = (
+        str_srs.str.split('"', expand=True)
+        .replace({None: ""})
+        .iloc[:, :-1]
+        .apply(lambda srs: srs.str.strip())
+    )
     # do away with attribute name equal signs and space
-    for attr_col, attr_label_srs in attrs_df.iloc[:,0::2].iteritems():
+    for attr_col, attr_label_srs in attrs_df.iloc[:, 0::2].iteritems():
         attrs_df[attr_col] = attr_label_srs.str.split("=", expand=True)[0].str.strip()
         attrs_df[attr_col].name = attr_col
 
     # combine parsed and attrs
-    result_df = (parsed_df + attrs_df)  # np.nan populated
+    result_df = parsed_df + attrs_df  # np.nan populated
     result_df.update(parsed_df)
     result_df.update(attrs_df)
 
@@ -87,7 +94,9 @@ def _parsed_df(xml_df: pd.DataFrame):
 
 def _gen_tag_df(tag: str, parsed_df: pd.DataFrame):
     tag_start_idx = parsed_df.index[(parsed_df[TAG] == tag) & (parsed_df[LB] == "<")]
-    tag_stop_idx = parsed_df.index[(parsed_df[TAG] == tag) & ((parsed_df[LB] == "</") | (parsed_df[LB] == "/>"))]
+    tag_stop_idx = parsed_df.index[
+        (parsed_df[TAG] == tag) & ((parsed_df[LB] == "</") | (parsed_df[LB] == "/>"))
+    ]
     if tag_start_idx.size != tag_stop_idx.size:
         raise TagException(f"{tag!r} tag start end mismatch")
     if _check(tag_stop_idx < tag_start_idx):
@@ -115,8 +124,10 @@ class TagGroup:
 
         for tag_df in _gen_tag_df(self.tag, parsed_df):
             attr_srs = pd.Series()
-            for col_num in range(0, len(tag_df.columns)-3, 2):
-                partial_attr_srs = tag_df.loc[:, (col_num, col_num + 1)].set_index(col_num).iloc[:, 0]
+            for col_num in range(0, len(tag_df.columns) - 3, 2):
+                partial_attr_srs = (
+                    tag_df.loc[:, (col_num, col_num + 1)].set_index(col_num).iloc[:, 0]
+                )
                 attr_srs = attr_srs.append(partial_attr_srs[partial_attr_srs != ""])
             key = attr_srs[self.key_attr]
             attr_srs.name = key
