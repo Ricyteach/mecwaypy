@@ -17,8 +17,8 @@ def run_result():
 
 @pytest.fixture
 def mock_appy_async(apply_async_result):
-    def apply_async(self, solve, kwds, callback):
-        apply_async_result.extend([solve, kwds, callback])
+    def apply_async(self, solve, args, kwds, callback):
+        apply_async_result.extend([solve, args, kwds, callback])
     return apply_async
 
 
@@ -60,7 +60,7 @@ def test_solve_multi(path_or_paths, glob, patched_apply_async, apply_async_resul
     kwds = dict(glob=glob, window=True)
     solve_multi(path_or_paths, **kwds)
     kwds.pop("glob")
-    assert apply_async_result == [solve, kwds, handle_result]
+    assert apply_async_result == [solve, [Path("foo.liml")], kwds, handle_result]
 
 
 @pytest.mark.parametrize("liml_path", [
@@ -69,5 +69,5 @@ def test_solve_multi(path_or_paths, glob, patched_apply_async, apply_async_resul
 ])
 def test_solve(liml_path, patched_run, run_result):
     solve(liml_path)
-    args = [f'"{MECWAY_EXE_PATH!s}"', f'"{liml_path!s}"', "solve"]
+    args = [f'{MECWAY_EXE_PATH!s}', f'{liml_path!s}', "solve"]
     assert run_result == [args, {}]

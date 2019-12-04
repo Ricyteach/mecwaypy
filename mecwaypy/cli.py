@@ -1,7 +1,7 @@
+from multiprocessing import Pool
 from multiprocessing.pool import AsyncResult
 from pathlib import Path
 import subprocess as sp
-from multiprocessing import Pool
 import os
 from typing import Iterable, Optional, Union, Iterator
 from mecwaypy.mecway import MecwayException
@@ -22,7 +22,7 @@ except KeyError as e:
 
 
 def solve(liml_path: Union[Path, str], window:bool=False, **kwargs) -> sp.CompletedProcess:
-    args = [f'"{MECWAY_EXE_PATH!s}"', f'"{liml_path!s}"']
+    args = [f'{MECWAY_EXE_PATH!s}', f'{liml_path!s}']
     if not window:
         args.append("solve")
     result = sp.run(args, **kwargs)
@@ -44,7 +44,7 @@ def solve_multi(path_or_paths: Union[Path, str, Iterable[Union[Path, str]]]=(), 
     for p in iter_paths:
         if p.suffix!=".liml":
             raise SolveException(f"invalid file type: {p.suffix}")
-        pool.apply_async(solve, kwds=kwargs, callback=handle_result)
+        pool.apply_async(solve, [p], kwds=kwargs, callback=handle_result)
     pool.close()
     pool.join()
 
