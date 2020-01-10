@@ -9,5 +9,5 @@ setup(
     author='Rick Teachey',
     author_email='ricky@teachey.org',
     description='Tools for working with mecway .liml files',
-    install_requires=['pandas']
+    install_requires=['pandas', 'dataclass-xml @ git+git://github.com/Ricyteach/dataclass-xml']
 )
